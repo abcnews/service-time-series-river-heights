@@ -1,62 +1,42 @@
-import ftp from "basic-ftp";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Writable } from "node:stream";
 import { parseRiverHeights } from "./parse-rivers.js";
 import logger from './logger.js'
 import { appendRecords } from "./sqlite.js";
+import { MultiClient } from "./ftp.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-/**
- * Helper to download a file to a buffer using basic-ftp
- */
-async function downloadToBuffer(client, remotePath) {
-  let buffer = Buffer.alloc(0);
-  const writable = new Writable({
-    write(chunk, encoding, callback) {
-      buffer = Buffer.concat([buffer, chunk]);
-      callback();
-    },
-  });
-
-  await client.downloadTo(writable, remotePath);
-  return buffer.toString("utf8");
-}
 
 export async function fetchRequestedProducts() {
   const productsPath = path.join(__dirname, "bom-products.json");
   const products = JSON.parse(await fs.readFile(productsPath, "utf8"));
 
-  const client = new ftp.Client();
   const allRecords = [];
 
+  const multiClient = await MultiClient.access({
+    host: "ftp.bom.gov.au",
+    user: "anonymous",
+    password: process.env.BOM_FTP_PASSWORD || "guest",
+    secure: false,
+    cd: "anon/gen/fwo",
+    concurrency: 3
+  });
+
   try {
-    await client.access({
-      host: "ftp.bom.gov.au",
-      user: "anonymous",
-      password: process.env.BOM_FTP_PASSWORD || "guest",
-      secure: false,
-    });
+    // Process products in parallel using the MultiClient pool
+    await Promise.all(products.map(async (product) => {
+      if (!product.filename) return;
 
-    logger.info("Connected to BOM FTP. Navigating to /anon/gen/fwo/...");
-    await client.cd("anon/gen/fwo");
-
-    for (const product of products) {
-      if (!product.filename) {
-        continue;
-      }
-
-      logger.info(`Fetching and parsing ${product.filename}...`);
       try {
-        const html = await downloadToBuffer(client, product.filename);
+        const html = await multiClient.downloadToBuffer(product.filename);
+        logger.info(`Fetched ${product.filename}...`);
         const result = await parseRiverHeights(html);
         allRecords.push(...result.records);
       } catch (err) {
         logger.error(`Failed to process ${product.filename}: %s`, err.message);
       }
-    }
+    }));
 
     if (allRecords.length > 0) {
       // Append to SQLite database
@@ -67,7 +47,7 @@ export async function fetchRequestedProducts() {
   } catch (err) {
     logger.error("FTP Error: %O", err);
   } finally {
-    client.close();
+    multiClient.close();
   }
 }
 
