@@ -1,0 +1,25 @@
+{
+  "name": "service-time-series-river-heights",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "cli.js",
+  "scripts": {
+    "fetch-rivers": "node . fetch-rivers",
+    "upload": "node . upload-s3 -s data",
+    "test": "NODE_ENV=test mocha test/*.test.js"
+  },
+  "dependencies": {
+    "basic-ftp": "^5.1.0",
+    "commander": "^14.0.3",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "jsdom": "^27.4.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.5"
+  }
+}
