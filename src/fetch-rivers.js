@@ -4,7 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Writable } from "node:stream";
 import { parseRiverHeights } from "./parse-rivers.js";
-import logger from '../src/logger.js'
+import logger from './logger.js'
+import { appendRecords } from "./sqlite.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -28,19 +29,6 @@ export async function fetchRequestedProducts() {
   const productsPath = path.join(__dirname, "bom-products.json");
   const products = JSON.parse(await fs.readFile(productsPath, "utf8"));
 
-  const timestamp = new Date().toISOString();
-  const outputDir = path.resolve(__dirname, "../data/rivers");
-  const outputFile = path.join(
-    outputDir,
-    `${timestamp.replace(/:/g, "-")}.json`,
-  );
-
-  try {
-    await fs.mkdir(outputDir, { recursive: true });
-  } catch (err) {
-    // Ignore if directory exists
-  }
-
   const client = new ftp.Client();
   const allRecords = [];
 
@@ -48,7 +36,7 @@ export async function fetchRequestedProducts() {
     await client.access({
       host: "ftp.bom.gov.au",
       user: "anonymous",
-      password: "guest",
+      password: process.env.BOM_FTP_PASSWORD || "guest",
       secure: false,
     });
 
@@ -71,10 +59,10 @@ export async function fetchRequestedProducts() {
     }
 
     if (allRecords.length > 0) {
-      await fs.writeFile(outputFile, JSON.stringify(allRecords, null, 2));
-      logger.info(`Saved ${allRecords.length} records to ${outputFile}`);
+      // Append to SQLite database
+      await appendRecords(allRecords);
     } else {
-      logger.info("No records found to save.");
+      logger.info("No records found to process.");
     }
   } catch (err) {
     logger.error("FTP Error: %O", err);

@@ -10,11 +10,12 @@ program
   .description("Fetch river height data from BOM FTP")
   .action(async () => {
     const { fetchRequestedProducts } = await import(
-      "./dataBomRiver/fetch-rivers.js"
+      "./src/fetch-rivers.js"
     );
     await fetchRequestedProducts();
   })
-  .command("upload-s3")
+
+  program.command("upload-s3")
   .description("Upload files to S3")
   .option("-e, --end-point <server>", "S3 endpoint", process.env.S3_END_POINT)
   .option("-p, --port <port>", "Port", process.env.S3_PORT || 443)
