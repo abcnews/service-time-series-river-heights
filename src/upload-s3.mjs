@@ -41,6 +41,17 @@ async function syncDir({ src, dest }) {
 
 async function uploadS3(options) {
   const { src, dest, bucket, ...s3Options } = options;
+
+  // Check for required configuration
+  const required = { src, dest, bucket, ...s3Options };
+  const missing = ["src", "dest", "bucket", "endPoint", "accessKey", "secretKey"].filter(
+    (key) => !required[key]
+  );
+
+  if (missing.length > 0) {
+    throw new Error(`Missing required S3 configuration: ${missing.join(", ")}`);
+  }
+
   const minioClient = new Minio.Client(s3Options);
 
   const srcAbsolute = path.resolve(process.cwd(), src);
@@ -103,7 +114,7 @@ async function uploadS3(options) {
 
     console.log(`\n✨ Deployment complete! Total time: ${totalTime}s`);
   } catch (err) {
-    console.error(`\n🛑 Upload process halted due to error.`);
+    console.error(`\n🛑 Upload process halted due to error.`, err.message);
     process.exit(1);
   }
 }
