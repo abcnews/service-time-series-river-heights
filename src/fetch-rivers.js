@@ -30,15 +30,19 @@ export async function fetchRequestedProducts() {
   const products = JSON.parse(await fs.readFile(productsPath, "utf8"));
 
   const client = new ftp.Client();
+  client.ftp.verbose = true;
   const allRecords = [];
 
   try {
-    await client.access({
+    const accessConfig = {
       host: "ftp.bom.gov.au",
       user: "anonymous",
       password: process.env.BOM_FTP_PASSWORD || "guest",
       secure: false,
-    });
+    };
+
+    logger.info(`Connecting to BOM FTP at ${accessConfig.host} as ${accessConfig.user}...`);
+    await client.access(accessConfig);
 
     logger.info("Connected to BOM FTP. Navigating to /anon/gen/fwo/...");
     await client.cd("anon/gen/fwo");
