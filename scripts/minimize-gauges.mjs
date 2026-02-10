@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 const minimizeGauges = async () => {
 	const __dirname = import.meta.dirname;
 	const inputPath = resolve(__dirname, '../data/gauge-locations.json');
-	const outputPath = resolve(__dirname, '../data/gauge-locations-minimal.json');
+	const outputPath = resolve(__dirname, '../data/gauge-locations.min.json');
 
 	console.log(`Reading gauge data from ${inputPath}...`);
 
@@ -20,13 +20,14 @@ const minimizeGauges = async () => {
 	const geojson = JSON.parse(data);
 
 	// Transform features to keep only required properties and remove id
-	const minimizedFeatures = geojson.features.map(({ type, geometry, properties }) => ({
+	const minimizedFeatures = geojson.features.filter(feature => !!feature.properties.observationCatchment).map(({ type, geometry, properties }) => ({
 		type,
 		geometry,
 		properties: {
 			id: properties.bom_stn_num,
-			name: properties.name,
-			basin: properties.basin,
+			name: properties.observationName,
+			catchment: properties.observationCatchment,
+			product: properties.product_name
 		},
 	}));
 
