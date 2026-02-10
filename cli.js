@@ -13,7 +13,21 @@ program
       "./src/fetch-rivers.js"
     );
     await fetchRequestedProducts();
-  })
+  });
+
+program
+  .command("generate-datasets")
+  .description("Generate daily datasets for river heights optimized for the visualization")
+  .option("-d, --dayStart <number>", "Day relative to today (0, -1, -2, etc.)", "0")
+  .option("-n, --days <number>", "Number of days to generate", "1")
+  .action(async (options) => {
+    const { generateDatasets } = await import("./src/generate-datasets.js");
+    const count = Number(options.days);
+    const start = Number(options.dayStart);
+    for (let i = 0; i < count; i++) {
+      await generateDatasets({ dayStart: start - i });
+    }
+  });
 
   program.command("upload-s3")
   .description("Upload files to S3")
