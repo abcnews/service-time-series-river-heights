@@ -36,17 +36,20 @@ export async function parseRiverHeights(html) {
   }
 
   const rows = Array.from(table.querySelectorAll("tbody tr"));
+  let currentCatchment = null;
+
   const records = rows
-    .filter((row) => {
-      // Ignore rows with rowspan because these are subheadings, not data.
-      const hasRowspan = Array.from(row.querySelectorAll("td, th")).some(
-        (cell) => cell.hasAttribute("rowspan"),
-      );
-      const cells = row.querySelectorAll("td");
-      return !hasRowspan && cells.length === 9;
-    })
     .map((row) => {
+      // Check for catchment headers
+      const catchmentHeader = row.querySelector("th.rowlevel1");
+      if (catchmentHeader) {
+        currentCatchment = catchmentHeader.textContent.trim().replace(/\u00a0/g, " ");
+        return null;
+      }
+
+      // Ignore rows that aren't station data (rows must have 9 cells)
       const cells = row.querySelectorAll("td");
+      if (cells.length !== 9) return null;
       const timeDayStr = cells[2].textContent.trim().replace(/\u00a0/g, " ");
       if (!timeDayStr) {
         return null; // Will be filtered out
@@ -105,6 +108,7 @@ export async function parseRiverHeights(html) {
           .trim()
           .replace(/\u00a0/g, " ")
           .trim(),
+        catchment: currentCatchment,
       };
     })
     .filter((record) => record !== null);
