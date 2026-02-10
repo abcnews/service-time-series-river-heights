@@ -2,7 +2,7 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseRiverHeights } from "../dataBomRiver/parse-rivers.js";
+import { parseRiverHeights } from "../src/parse-rivers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,8 +22,9 @@ describe("parseRiverHeights", () => {
     const first = records[0];
     assert.strictEqual(first.id, "515008");
     assert.strictEqual(first.stationName, "Todd River at Bond Springs");
-    assert.strictEqual(first.timestamp, "2026-01-20T15:10:00+09:30");
+    assert.strictEqual(first.observedAt, "2026-01-20T15:10:00+09:30");
     assert.strictEqual(first.heightM, 1.0);
+    assert.strictEqual(first.catchment, "Todd Catchment");
   });
 
   it("should parse all HTML files and verify timezone coverage", async () => {
@@ -48,7 +49,7 @@ describe("parseRiverHeights", () => {
             r.heightM === null ? "object" : "number",
           );
           assert.ok(
-            r.timestamp.endsWith(issuedAt.slice(-6)),
+            r.observedAt.endsWith(issuedAt.slice(-6)),
             "Record offset should match issuedAt offset",
           );
         });
