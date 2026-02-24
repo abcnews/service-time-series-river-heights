@@ -20,6 +20,11 @@ const logger = winston.createLogger({
       // Silence the logger if we are running tests
       silent: process.env.NODE_ENV === "test",
     }),
+    new winston.transports.File({
+      filename: process.env.LOG_FILE || "data/app.log",
+      // Silence the logger if we are running tests
+      silent: process.env.NODE_ENV === "test",
+    }),
   ],
 });
 
