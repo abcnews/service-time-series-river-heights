@@ -11,10 +11,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Copy the rest of the application code
 COPY . .
+
+# Ensure .env exists (can be empty if not provided during build)
+RUN touch .env
 
 # Ensure data directory exists
 RUN mkdir -p data
