@@ -11,7 +11,7 @@
     "upload": "node . upload-s3 -s data",
     "test": "NODE_ENV=test mocha test/*.test.js",
     "get-db": "dotenv -- bash -c 'URL=https://$S3_BUCKET.$S3_END_POINT/${S3_DEST}rivers.sqlite.gz;echo $URL;curl $URL|gunzip>data/rivers.sqlite'",
-    "go": "dotenv -- npm run get-db && dotenv -- npm run fetch:rivers && dotenv -- node . generate-datasets --days 2 && gzip data/rivers.sqlite && dotenv -- npm run upload",
+    "go": "dotenv -- npm run get-db && dotenv -- npm run fetch:rivers && dotenv -- node . generate-datasets --days 2 && gzip -f data/rivers.sqlite && dotenv -- npm run upload",
     "scheduler": "dotenv -- node src/scheduler.js"
   },
   "dependencies": {
