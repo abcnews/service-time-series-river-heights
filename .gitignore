@@ -16,3 +16,4 @@ data/assets/
 plans
 data/rivers
 data/rivers.sqlite
+data/*.log
